@@ -3,12 +3,18 @@
 > **Project Goal:** Create a scalable, maintainable architecture scaffold for a live events ticketing system that demonstrates production-ready patterns
 
 
-
+---
 
 ## Table of Contents
 
 1. [System Overview](#system-overview)
 2. [Architecture Diagrams](#architecture-diagrams)
+3. [Technology Stack](#technology-stack)
+4. [Trade-offs](#trade-offs)
+5. [Deployment Strategy](#deployment-strategy)
+6. [Security Considerations](#security-considerations)
+7. [Scalability Considerations](#scalability-considerations)
+
 
 ---
 
@@ -36,7 +42,9 @@ The ticketing system is designed as a **modern web application** with clear sepa
 
 ## Architecture Diagrams
 
-### 1. System Context (High-Level Architecture)
+> Using **4+1 Architectural View Model** to describe the system from different perspectives.
+
+### 1. Logical View - System Context
 
 ```mermaid
 
@@ -69,7 +77,7 @@ graph TB
 
 ---
 
-### 2. Backend Layered Architecture
+### 2. Logical View - Component Architecture
 
 ```mermaid
 
@@ -116,7 +124,7 @@ graph LR
 
 ---
 
-### 3. Authentication Flow (Sequence Diagram)
+### 3. Process View - Authentication Flow
 
 ```mermaid
 
@@ -162,7 +170,7 @@ sequenceDiagram
 
 ---
 
-### 4. Ticket Purchase Flow (Sequence Diagram)
+### 4. Process View - Ticket Purchase Flow
 
 ```mermaid
 
@@ -206,7 +214,7 @@ sequenceDiagram
 
 ---
 
-### 5. Deployment Architecture
+### 5. Development View - Deployment
 
 #### Local Development Environment
 
@@ -297,3 +305,261 @@ graph TB
 
 ---
 
+### 6. Data View - Entity Relationship Diagram
+
+```mermaid 
+
+erDiagram
+    users ||--o{ ticket_orders : places
+    events ||--o{ ticket_orders : has
+    ticket_orders ||--o{ tickets : contains
+
+    users {
+        uuid id PK
+        varchar email UK
+        varchar password_hash
+        varchar role
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    events {
+        uuid id PK
+        varchar title
+        text description
+        timestamp event_date
+        varchar venue
+        decimal ticket_price
+        int total_tickets
+        int available_tickets
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ticket_orders {
+        uuid id PK
+        uuid event_id FK
+        uuid user_id FK
+        int quantity
+        decimal total_price
+        varchar status
+        varchar payment_id
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    tickets {
+        uuid id PK
+        uuid order_id FK
+        varchar ticket_code UK
+        varchar status
+        timestamp used_at
+        timestamp created_at
+    }
+```
+
+**Ticket purchase mechanism:**
+1. **Availability tracking:**
+   - `events.total_tickets` - Original capacity
+   - `events.available_tickets` - Current inventory (decremented on order, not ticket generation)
+   - Inventory management decoupled from ticket generation
+
+2. **Order and ticket states:**
+   - `ticket_orders.status`: `pending`, `paid`, `confirmed`, `cancelled`, `refunded`
+   - `tickets.status`: `valid`, `used`, `cancelled`, `transferred`
+   - Payment processed at order level, not individual tickets
+
+**Constraints:**
+- `users.email` - Unique constraint
+- `ticket_orders.event_id` - Foreign key with ON DELETE RESTRICT
+- `ticket_orders.user_id` - Foreign key with ON DELETE CASCADE
+- `tickets.order_id` - Foreign key with ON DELETE CASCADE
+- `tickets.ticket_code` - Unique constraint (generated when ticket created)
+- Check constraint: `events.available_tickets >= 0`
+- Check constraint: `ticket_orders.quantity > 0`
+
+---
+
+## Technology Stack
+
+### Backend Stack
+
+| Component | Technology | Rationale |
+|----|----|----|
+| **Language** | Go | Strong concurrency (goroutines), small binaries (\~20MB), fast compilation, excellent for high-throughput APIs |
+| **Web Framework** | Gin | Fast HTTP router , built-in validation, middleware ecosystem, minimal overhead |
+| **Database** | PostgreSQL | ACID compliance for ticket transactions, row-level locking prevents double-booking, rich query capabilities |
+| **Cache** | Redis | In-memory cache for event listings, session data (future), rate limiting capability |
+| **Database Client** | sqlx | Light wrapper over database/sql with struct scanning, not a full ORM (keeps SQL visible) |
+| **Migrations** | golang-migrate | Database-agnostic, CLI tool, supports up/down migrations |
+| **Auth** | golang-jwt/jwt | JWT generation and validation, industry standard |
+| **Environment Config** | godotenv | Load .env files for local development |
+
+### Frontend Stack
+
+| Component | Technology | Rationale |
+|----|----|----|
+| **Framework** | React | Industry standard, large ecosystem, well-understood by most developers |
+| **Build Tool** | Vite | Fast HMR (Hot Module Replacement), modern ESM-based, smaller bundles than Webpack |
+| **Language** | TypeScript | Type safety reduces runtime errors, pairs well with Go's strong typing |
+| **Router** | React Router | Standard routing solution, supports protected routes |
+| **HTTP Client** | Axios | Interceptors for auth token injection, better error handling than fetch |
+| **State Management** | Context API | Sufficient for auth state, avoids Redux complexity for scaffold |
+
+### Infrastructure Stack
+
+| Component | Local (Docker) | Cloud (AWS) | Rationale |
+|----|----|----|----|
+| **Compute** | Docker Container | ECS Fargate | Serverless containers, auto-scaling, no EC2 management |
+| **Database** | PostgreSQL Container | RDS PostgreSQL | Managed service, automated backups, Multi-AZ for HA |
+| **Cache** | Redis Container | ElastiCache Redis | Managed Redis, cluster mode for scalability |
+| **Object Storage** | MinIO | S3 | S3-compatible locally, production-ready globally-distributed storage |
+| **CDN** | - | Cloudflare | Global CDN with DDoS protection, HTTPS termination |
+| **Load Balancer** | - | ALB | Health checks, SSL termination, and auto-scaling integration |
+| **IaC** | Docker Compose | Terraform | Infrastructure as Code, repeatable deployments |
+
+
+---
+
+## Trade-offs
+
+### Decisions Made
+
+| Decision | Benefit | Cost | Mitigation |
+|----|----|----|----|
+| **JWT (Stateless)** | Horizontal scaling, no session store | Cannot revoke tokens | Short TTL (24h) + refresh tokens (future) |
+| **Docker Compose** | Easy local dev, environment parity | Requires Docker install (\~1GB) | Docker is industry standard, acceptable |
+| **Gin Framework** | Fast, built-in features | Slightly opinionated | Still lightweight, easy to swap if needed |
+| **Postgres (not NoSQL)** | Strong consistency, ACID | Complex setup vs. MongoDB | Necessary for ticket transactions |
+
+
+---
+
+## Deployment Strategy
+
+### Local Development
+
+Prerequisites: Docker Desktop + Git
+
+**Setup:**
+```bash
+git clone <repository-url>
+cd ticketing-system
+docker-compose up
+```
+
+**Teardown:**
+```bash
+docker-compose down -v
+```
+
+---
+
+### Cloud Deployment (AWS)
+
+Prerequisites: AWS account + AWS CLI + Terraform
+
+**Setup:**
+```bash
+cd infra/terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+**Provisioned resources:**
+- VPC with public/private subnets
+- ECS Fargate cluster with auto-scaling
+- RDS PostgreSQL (Multi-AZ)
+- ElastiCache Redis
+- S3 bucket + Cloudflare CDN
+- Application Load Balancer
+- Security groups
+
+**Teardown:**
+```bash
+terraform destroy
+```
+
+
+---
+
+## Security Considerations
+
+### Current Implementation
+
+1. JWT-based authentication (token in localStorage)
+2. Role-based access control (user/admin)
+3. Environment variables for secrets (`.env`)
+4. CORS configured for frontend origins
+
+### Production TODOs
+
+**Network:**
+- Deploy backend in private subnets only
+- Use VPC security groups (least-privilege)
+- Enable Cloudflare WAF rules for DDoS protection
+
+**Database:**
+- IAM database authentication
+- Automated backups (7-day retention)
+
+**Secrets:**
+- Migrate to AWS Secrets Manager
+- Implement secret rotation
+
+**Input Validation:**
+- Comprehensive sanitization (XSS, SQL injection)
+- Rate limiting per user
+
+**Logging:**
+- CloudWatch Logs for API requests
+- CloudTrail for infrastructure changes
+- Alerting on suspicious activity
+
+
+---
+
+## Scalability Considerations
+
+### Current Design
+
+1. **Stateless Backend** - JWT enables horizontal scaling
+2. **Database** - Connection pooling, supports read replicas
+3. **Caching** - Redis for frequently accessed data
+4. **CDN** - Cloudflare for global static asset delivery
+
+### Future Improvements
+
+**Database:**
+- Add read replicas for heavy queries
+- Consider partitioning tickets table by date
+- Sharding for multi-region (if needed)
+
+**Backend:**
+- Auto-scaling based on CPU/memory metrics
+- Circuit breakers for external services
+
+**Frontend:**
+- Code splitting for faster initial load
+- Lazy loading for routes
+
+**Observability:**
+- Distributed tracing with OpenTelemetry
+- Metrics and monitoring via Grafana + Prometheus
+
+**Migration Strategy:**
+- Strangler Fig pattern for gradual microservice migration
+- Start with event service as independent microservice
+- Keep monolith as API gateway during transition
+
+
+---
+
+## References
+
+* [Go Project Layout](https://github.com/golang-standards/project-layout) - Standard Go structure
+* [12-Factor App](https://12factor.net/) - Modern app best practices
+* [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/) - Cloud architecture principles
+* [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Security best practices
+* [4+1 Views in Modeling System Architecture](https://guides.visual-paradigm.com/4-1-views-in-modeling-system-architecture-with-uml/)
