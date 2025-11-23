@@ -1,0 +1,141 @@
+version: '3.8'
+
+services:
+  # Shared PostgreSQL for all services
+  postgres-shared:
+    image: postgres:16-alpine
+    container_name: postgres-shared
+    ports:
+      - "5434:5432"
+    deploy:
+      resources:
+        limits:
+          cpus: 1.5
+          memory: 2G
+        reservations:
+          cpus: 0.5
+          memory: 512M
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_secure_password}
+      # Default database (will create multiple databases via init script)
+      - POSTGRES_DB=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_shared_data:/var/lib/postgresql/data
+      - ./init-scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    networks:
+      - bm_ticketing-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Shared Redis for caching, sessions, and queues
+  redis-shared:
+    image: redis:7-alpine
+    container_name: redis-shared
+    ports:
+      - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: 0.5
+          memory: 512M
+        reservations:
+          cpus: 0.2
+          memory: 128M
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secure_password}
+    volumes:
+      - redis_shared_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    networks:
+      - bm_ticketing-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Ticketing API Service
+  backend-ticketing:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend-ticketing
+    ports:
+      - "8091:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: 1.0
+          memory: 512M
+        reservations:
+          cpus: 0.3
+          memory: 128M
+    environment:
+      # Server Configuration
+      - PORT=8080
+      - ENV=${ENV:-development}
+
+      # Database Configuration
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_password}@postgres-shared:5432/${TICKETING_DB_NAME:-ticketing_db}?sslmode=disable
+      - DB_MAX_OPEN_CONNS=${DB_MAX_OPEN_CONNS:-25}
+      - DB_MAX_IDLE_CONNS=${DB_MAX_IDLE_CONNS:-5}
+      - DB_CONN_MAX_LIFETIME=${DB_CONN_MAX_LIFETIME:-5m}
+
+      # Redis Configuration
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secure_password}@redis-shared:6379/0
+
+      # Authentication
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-key-change-in-production}
+      - JWT_EXPIRY=${JWT_EXPIRY:-24h}
+
+      # Object Storage
+      - STORAGE_TYPE=${STORAGE_TYPE:-local}
+      - S3_BUCKET=${S3_BUCKET:-ticketing-assets}
+      - S3_REGION=${S3_REGION:-us-east-1}
+
+      # External Services (Stubbed)
+      - PAYMENT_GATEWAY_KEY=${PAYMENT_GATEWAY_KEY:-stub}
+      - EMAIL_SERVICE_KEY=${EMAIL_SERVICE_KEY:-stub}
+
+      # CORS
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
+    volumes:
+      # Mount for local development (optional - comment out for production)
+      - ./backend:/app:ro
+      # Mount for local file storage
+      - backend_storage:/app/storage
+    depends_on:
+      postgres-shared:
+        condition: service_healthy
+      redis-shared:
+        condition: service_healthy
+    networks:
+      - bm_ticketing-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  postgres_shared_data:
+    driver: local
+  redis_shared_data:
+    driver: local
+  backend_storage:
+    driver: local
+
+networks:
+  bm_ticketing-network:
+    name: bm_ticketing-network
+    driver: bridge

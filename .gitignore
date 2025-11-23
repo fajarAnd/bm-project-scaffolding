@@ -2,3 +2,24 @@ dist/
 node_modules/
 .env
 !.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Air (live reload)
+tmp/
+
+# Logs
+*.log
+
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/.idea/
