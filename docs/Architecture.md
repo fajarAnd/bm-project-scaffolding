@@ -126,7 +126,7 @@ graph LR
 
 ### 3. Process View - Authentication Flow
 
-```mermaid
+```mermaid 
 
 sequenceDiagram
     actor User
@@ -307,10 +307,14 @@ graph TB
 
 ### 6. Data View - Entity Relationship Diagram
 
-```mermaid 
+```mermaid
 
 erDiagram
     users ||--o{ ticket_orders : places
+    users ||--o{ user_roles : has
+    roles ||--o{ user_roles : assigned_to
+    roles ||--o{ role_permissions : has
+    permissions ||--o{ role_permissions : granted_to
     events ||--o{ ticket_orders : has
     ticket_orders ||--o{ tickets : contains
 
@@ -318,9 +322,42 @@ erDiagram
         uuid id PK
         varchar email UK
         varchar password_hash
-        varchar role
+        boolean is_active
         timestamp created_at
         timestamp updated_at
+    }
+
+    roles {
+        uuid id PK
+        varchar name UK "admin, user, organizer"
+        varchar description
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    permissions {
+        uuid id PK
+        varchar name UK "events.create, users.delete"
+        varchar resource "events, users, tickets"
+        varchar action "create, read, update, delete"
+        varchar description
+        timestamp created_at
+    }
+
+    user_roles {
+        uuid id PK
+        uuid user_id FK
+        uuid role_id FK
+        timestamp assigned_at
+        uuid assigned_by FK
+    }
+
+    role_permissions {
+        uuid id PK
+        uuid role_id FK
+        uuid permission_id FK
+        timestamp created_at
     }
 
     events {
@@ -358,6 +395,27 @@ erDiagram
     }
 ```
 
+**RBAC (Role-Based Access Control) Design:**
+
+The system uses a flexible RBAC model with separate tables for roles and permissions:
+
+1. **User-Role Assignment:**
+   - `user_roles` - Junction table enabling many-to-many relationship
+   - Users can have multiple roles (e.g., user + organizer)
+   - Tracks who assigned the role and when for audit trail
+
+2. **Role-Permission Model:**
+   - `roles` - Master data for system roles (admin, user, organizer, etc.)
+   - `permissions` - Granular permissions following resource.action naming (e.g., `events.create`, `users.delete`)
+   - `role_permissions` - Junction table mapping permissions to roles
+   - Allows dynamic permission updates without code changes
+
+3. **Default Roles:**
+   - **user** - Basic customer (buy tickets, view own orders)
+   - **admin** - Full system access (user management, system config)
+   - **organizer** - Event management (create events, view sales)
+   - **validator** - Ticket validation only (scan at venue entrance)
+
 **Ticket purchase mechanism:**
 1. **Availability tracking:**
    - `events.total_tickets` - Original capacity
@@ -370,7 +428,22 @@ erDiagram
    - Payment processed at order level, not individual tickets
 
 **Constraints:**
+
+*Users & Auth:*
 - `users.email` - Unique constraint
+- `user_roles.user_id` - Foreign key with ON DELETE CASCADE
+- `user_roles.role_id` - Foreign key with ON DELETE RESTRICT
+- `user_roles.assigned_by` - Foreign key to users(id), nullable
+- Composite unique: `(user_id, role_id)` - Prevent duplicate role assignments
+
+*Roles & Permissions:*
+- `roles.name` - Unique constraint
+- `permissions.name` - Unique constraint
+- `role_permissions.role_id` - Foreign key with ON DELETE CASCADE
+- `role_permissions.permission_id` - Foreign key with ON DELETE CASCADE
+- Composite unique: `(role_id, permission_id)` - Prevent duplicate permission assignments
+
+*Tickets & Orders:*
 - `ticket_orders.event_id` - Foreign key with ON DELETE RESTRICT
 - `ticket_orders.user_id` - Foreign key with ON DELETE CASCADE
 - `tickets.order_id` - Foreign key with ON DELETE CASCADE
@@ -394,6 +467,9 @@ erDiagram
 | **Migrations** | golang-migrate | Database-agnostic, CLI tool, supports up/down migrations |
 | **Auth** | golang-jwt/jwt | JWT generation and validation, industry standard |
 | **Environment Config** | godotenv | Load .env files for local development |
+| **Logging** | zerolog | Zero-allocation JSON logger, structured logging, high performance, minimal overhead |
+| **Build Tool** | Makefile | Task automation for builds, tests, migrations, and Docker operations |
+| **Testing/Mocking** | mockery | Auto-generate mocks from interfaces for unit testing, type-safe test doubles |
 
 ### Frontend Stack
 
@@ -488,10 +564,32 @@ terraform destroy
 
 ### Current Implementation
 
-1. JWT-based authentication (token in localStorage)
-2. Role-based access control (user/admin)
-3. Environment variables for secrets (`.env`)
-4. CORS configured for frontend origins
+1. **Authentication:** JWT-based (token in localStorage)
+2. **Authorization:** RBAC with separate roles, permissions, and user_roles tables
+3. **Environment:** Variables for secrets (`.env`)
+4. **CORS:** Configured for frontend origins
+
+### RBAC Implementation Details
+
+**Authorization Flow:**
+```
+1. User authenticates → JWT token issued with user_id
+2. Request hits protected endpoint
+3. Middleware extracts user_id from JWT
+4. Query user's permissions via:
+   user_roles → roles → role_permissions → permissions
+5. Check if required permission exists
+6. Allow/deny request
+```
+
+
+
+**Caching Strategy:**
+- Cache user permissions in Redis (key: `user:{user_id}:permissions`)
+- TTL: 15 minutes
+- Invalidate on role/permission changes
+- Reduces database queries on every request
+
 
 ### Production TODOs
 
@@ -503,19 +601,23 @@ terraform destroy
 **Database:**
 - IAM database authentication
 - Automated backups (7-day retention)
+- Add indexes on user_roles and role_permissions for faster permission lookups
 
 **Secrets:**
 - Migrate to AWS Secrets Manager
 - Implement secret rotation
 
+
 **Input Validation:**
 - Comprehensive sanitization (XSS, SQL injection)
 - Rate limiting per user
+- Validate permission names follow `resource.action` format
 
 **Logging:**
 - CloudWatch Logs for API requests
 - CloudTrail for infrastructure changes
 - Alerting on suspicious activity
+- Log all permission checks (who accessed what, when)
 
 
 ---
@@ -562,4 +664,4 @@ terraform destroy
 * [12-Factor App](https://12factor.net/) - Modern app best practices
 * [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/) - Cloud architecture principles
 * [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Security best practices
-* [4+1 Views in Modeling System Architecture](https://guides.visual-paradigm.com/4-1-views-in-modeling-system-architecture-with-uml/)
+
