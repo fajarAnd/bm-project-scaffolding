@@ -1,30 +1,36 @@
 package models
 
+import "time"
+
 // TicketOrder represents a ticket purchase order
 type TicketOrder struct {
-	// TODO: Define ticket order fields
-	// Expected fields:
-	// - ID (UUID)
-	// - EventID (FK to events)
-	// - UserID (FK to users)
-	// - Quantity
-	// - TotalPrice
-	// - Status (pending, paid, confirmed, cancelled, refunded)
-	// - PaymentID
-	// - CreatedAt
-	// - UpdatedAt
+	ID         string    `db:"id" json:"id"`
+	EventID    string    `db:"event_id" json:"event_id"`
+	UserID     string    `db:"user_id" json:"user_id"`
+	Quantity   int       `db:"quantity" json:"quantity"`
+	TotalPrice float64   `db:"total_price" json:"total_price"`
+	Status     string    `db:"status" json:"status"`
+	PaymentID  *string   `db:"payment_id" json:"payment_id,omitempty"`
+	CreatedAt  time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt  time.Time `db:"updated_at" json:"updated_at"`
+
+	// Relationships (loaded via joins)
+	Event   *Event   `db:"-" json:"event,omitempty"`
+	User    *User    `db:"-" json:"user,omitempty"`
+	Tickets []Ticket `db:"-" json:"tickets,omitempty"`
 }
 
 // Ticket represents an individual ticket
 type Ticket struct {
-	// TODO: Define ticket fields
-	// Expected fields:
-	// - ID (UUID)
-	// - OrderID (FK to ticket_orders)
-	// - TicketCode (unique)
-	// - Status (valid, used, cancelled, transferred)
-	// - UsedAt
-	// - CreatedAt
+	ID         string     `db:"id" json:"id"`
+	OrderID    string     `db:"order_id" json:"order_id"`
+	TicketCode string     `db:"ticket_code" json:"ticket_code"`
+	Status     string     `db:"status" json:"status"`
+	UsedAt     *time.Time `db:"used_at" json:"used_at,omitempty"`
+	CreatedAt  time.Time  `db:"created_at" json:"created_at"`
+
+	// Relationships (loaded via joins)
+	Order *TicketOrder `db:"-" json:"order,omitempty"`
 }
 
 // TicketOrderStatus defines ticket order status types

@@ -1,0 +1,1 @@
+DELETE FROM permissions WHERE resource IN ('events', 'users', 'tickets');

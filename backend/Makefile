@@ -52,9 +52,21 @@ migrate-up: ## Run database migrations
 	@echo "Running migrations..."
 	@migrate -path migrations -database "$(DATABASE_URL)" up
 
-migrate-down: ## Rollback database migrations
-	@echo "Rolling back migrations..."
-	@migrate -path migrations -database "$(DATABASE_URL)" down
+migrate-down: ## Rollback last migration
+	@echo "Rolling back last migration..."
+	@migrate -path migrations -database "$(DATABASE_URL)" down 1
+
+migrate-drop: ## Drop all tables (WARNING: destructive)
+	@echo "Dropping all tables..."
+	@migrate -path migrations -database "$(DATABASE_URL)" drop -f
+
+migrate-status: ## Show migration status
+	@echo "Migration status:"
+	@migrate -path migrations -database "$(DATABASE_URL)" version
+
+migrate-force: ## Force set migration version (usage: make migrate-force version=1)
+	@echo "Forcing migration version to: $(version)"
+	@migrate -path migrations -database "$(DATABASE_URL)" force $(version)
 
 docker-build: ## Build Docker image
 	@echo "Building Docker image..."
