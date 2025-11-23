@@ -66,16 +66,15 @@ func setupLogger(env string) zerolog.Logger {
 }
 
 func connectDB(url string) (*sqlx.DB, error) {
-	// TODO: implement actual database connection
-	// db, err := sqlx.Connect("postgres", url)
-	// if err != nil {
-	//     return nil, err
-	// }
-	// db.SetMaxOpenConns(25)
-	// db.SetMaxIdleConns(5)
-	// return db, nil
+	db, err := sqlx.Connect("postgres", url)
+	if err != nil {
+		return nil, err
+	}
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+	return db, nil
 
-	return nil, fmt.Errorf("database connection not implemented")
+	//return nil, fmt.Errorf("database connection not implemented")
 }
 
 type repositoryDeps struct {

@@ -1,11 +1,14 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates
 
 # Set working directory
 WORKDIR /build
+
+# Set GOTOOLCHAIN to auto to allow downloading required Go version
+ENV GOTOOLCHAIN=auto
 
 # Copy go mod files first for better caching
 COPY go.mod go.sum ./

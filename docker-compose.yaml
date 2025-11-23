@@ -2,9 +2,9 @@ version: '3.8'
 
 services:
   # Shared PostgreSQL for all services
-  postgres-shared:
+  postgres-bm:
     image: postgres:16-alpine
-    container_name: postgres-shared
+    container_name: postgres-bm
     ports:
       - "5434:5432"
     deploy:
@@ -16,29 +16,29 @@ services:
           cpus: 0.5
           memory: 512M
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_secure_password}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       # Default database (will create multiple databases via init script)
       - POSTGRES_DB=postgres
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - postgres_shared_data:/var/lib/postgresql/data
-      - ./init-scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
     networks:
       - bm_ticketing-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   # Shared Redis for caching, sessions, and queues
-  redis-shared:
+  redis-ticketing:
     image: redis:7-alpine
-    container_name: redis-shared
+    container_name: redis-ticketing
     ports:
-      - "6379:6379"
+      - "6380:6379"
     deploy:
       resources:
         limits:
@@ -48,7 +48,7 @@ services:
           cpus: 0.2
           memory: 128M
     environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secure_password}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
       - redis_shared_data:/data
       - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
@@ -84,16 +84,16 @@ services:
       - ENV=${ENV:-development}
 
       # Database Configuration
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_password}@postgres-shared:5432/${TICKETING_DB_NAME:-ticketing_db}?sslmode=disable
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-bm:5432/${TICKETING_DB_NAME}?sslmode=disable
       - DB_MAX_OPEN_CONNS=${DB_MAX_OPEN_CONNS:-25}
       - DB_MAX_IDLE_CONNS=${DB_MAX_IDLE_CONNS:-5}
       - DB_CONN_MAX_LIFETIME=${DB_CONN_MAX_LIFETIME:-5m}
 
       # Redis Configuration
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secure_password}@redis-shared:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis-ticketing:6379/0
 
       # Authentication
-      - JWT_SECRET=${JWT_SECRET:-dev-secret-key-change-in-production}
+      - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRY=${JWT_EXPIRY:-24h}
 
       # Object Storage
@@ -102,20 +102,18 @@ services:
       - S3_REGION=${S3_REGION:-us-east-1}
 
       # External Services (Stubbed)
-      - PAYMENT_GATEWAY_KEY=${PAYMENT_GATEWAY_KEY:-stub}
-      - EMAIL_SERVICE_KEY=${EMAIL_SERVICE_KEY:-stub}
+      - PAYMENT_GATEWAY_KEY=${PAYMENT_GATEWAY_KEY}
+      - EMAIL_SERVICE_KEY=${EMAIL_SERVICE_KEY}
 
       # CORS
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
     volumes:
-      # Mount for local development (optional - comment out for production)
-      - ./backend:/app:ro
       # Mount for local file storage
       - backend_storage:/app/storage
     depends_on:
-      postgres-shared:
+      postgres-bm:
         condition: service_healthy
-      redis-shared:
+      redis-ticketing:
         condition: service_healthy
     networks:
       - bm_ticketing-network
