@@ -36,7 +36,7 @@ func main() {
 
 	// Initialize dependencies
 	repos := initRepositories(db)
-	services := initServices(repos, logger)
+	services := initServices(repos, cfg, logger)
 	handlers := initHandlers(services)
 
 	// Setup router
@@ -95,13 +95,15 @@ type serviceDeps struct {
 	auth   services.AuthService
 	event  services.EventService
 	ticket services.TicketService
+	user   services.UserService
 }
 
-func initServices(repos *repositoryDeps, logger zerolog.Logger) *serviceDeps {
+func initServices(repos *repositoryDeps, cfg *config.Config, logger zerolog.Logger) *serviceDeps {
 	return &serviceDeps{
-		auth:   services.NewAuthService(repos.user, logger),
+		auth:   services.NewAuthService(repos.user, cfg.JWT, logger),
 		event:  services.NewEventService(repos.event, logger),
 		ticket: services.NewTicketService(repos.ticket, repos.event, logger),
+		user:   services.NewUserService(repos.user, logger),
 	}
 }
 
@@ -117,6 +119,6 @@ func initHandlers(services *serviceDeps) *handlerDeps {
 		auth:   handlers.NewAuthHandler(services.auth),
 		event:  handlers.NewEventHandler(services.event),
 		ticket: handlers.NewTicketHandler(services.ticket),
-		user:   handlers.NewUserHandler(),
+		user:   handlers.NewUserHandler(services.user),
 	}
 }

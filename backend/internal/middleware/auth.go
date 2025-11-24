@@ -4,7 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/baramulti/ticketing-system/backend/internal/models"
+	"github.com/baramulti/ticketing-system/backend/internal/config"
+	jwtutil "github.com/baramulti/ticketing-system/backend/pkg/jwt"
 	"github.com/baramulti/ticketing-system/backend/pkg/response"
 	"github.com/gin-gonic/gin"
 )
@@ -12,9 +13,12 @@ import (
 const (
 	AuthHeaderKey  = "Authorization"
 	UserContextKey = "user"
+	UserIDKey      = "user_id"
+	UserEmailKey   = "user_email"
+	UserRolesKey   = "user_roles"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(jwtCfg config.JWTConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader(AuthHeaderKey)
 		if authHeader == "" {
@@ -30,39 +34,51 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		_ = parts[1] // token - TODO: validate JWT
+		tokenString := parts[1]
 
-		// TODO: validate JWT token and extract user info
-		// For now, mock user for development
-		mockUser := &models.User{
-			// ID:    "mock-user-id",
-			// Email: "demo@example.com",
-			// Role:  models.RoleUser,
+		// Validate JWT token
+		claims, err := jwtutil.ValidateToken(tokenString, jwtCfg.Secret)
+		if err != nil {
+			response.Error(c, http.StatusUnauthorized, "invalid or expired token")
+			c.Abort()
+			return
 		}
 
-		c.Set(UserContextKey, mockUser)
+		// Set user info in context
+		c.Set(UserIDKey, claims.UserID)
+		c.Set(UserEmailKey, claims.Email)
+		c.Set(UserRolesKey, claims.Roles)
+
 		c.Next()
 	}
 }
 
-func RequireRole(allowedRoles ...models.UserRole) gin.HandlerFunc {
+func RequireRole(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userVal, exists := c.Get(UserContextKey)
+		rolesVal, exists := c.Get(UserRolesKey)
 		if !exists {
 			response.Error(c, http.StatusUnauthorized, "user not authenticated")
 			c.Abort()
 			return
 		}
 
-		_, ok := userVal.(*models.User)
+		userRoles, ok := rolesVal.([]string)
 		if !ok {
-			response.Error(c, http.StatusInternalServerError, "invalid user context")
+			response.Error(c, http.StatusInternalServerError, "invalid roles")
 			c.Abort()
 			return
 		}
+		
+		for _, userRole := range userRoles {
+			for _, allowed := range allowedRoles {
+				if userRole == allowed {
+					c.Next()
+					return
+				}
+			}
+		}
 
-		// TODO: check if user.Role is in allowedRoles
-		// For now, allow all authenticated users
-		c.Next()
+		response.Error(c, http.StatusForbidden, "insufficient permissions")
+		c.Abort()
 	}
 }

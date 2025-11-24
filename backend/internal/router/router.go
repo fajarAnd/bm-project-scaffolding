@@ -38,9 +38,9 @@ func Setup(cfg *RouterConfig) *gin.Engine {
 	api := r.Group("/api/v1")
 	{
 		setupAuthRoutes(api, cfg.AuthHandler)
-		setupEventRoutes(api, cfg.EventHandler)
-		setupTicketRoutes(api, cfg.TicketHandler)
-		setupUserRoutes(api, cfg.UserHandler)
+		setupEventRoutes(api, cfg.EventHandler, cfg.Config.JWT)
+		setupTicketRoutes(api, cfg.TicketHandler, cfg.Config.JWT)
+		setupUserRoutes(api, cfg.UserHandler, cfg.Config.JWT)
 	}
 
 	return r

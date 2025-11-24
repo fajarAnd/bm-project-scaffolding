@@ -1,6 +1,8 @@
 ### Variables
 @baseUrl = http://localhost:8091/api/v1
 @contentType = application/json
+# Token will be populated after login
+@token = your-jwt-token-here
 
 ### Register New User
 POST {{baseUrl}}/auth/register
@@ -8,11 +10,11 @@ Content-Type: {{contentType}}
 
 {
   "email": "user@example.com",
-  "password": "password123",
-  "name": "John Doe"
+  "password": "password123"
 }
 
-### Login
+### Login - Regular User
+# @name login
 POST {{baseUrl}}/auth/login
 Content-Type: {{contentType}}
 
@@ -22,6 +24,7 @@ Content-Type: {{contentType}}
 }
 
 ### Login - Admin
+# @name loginAdmin
 POST {{baseUrl}}/auth/login
 Content-Type: {{contentType}}
 
