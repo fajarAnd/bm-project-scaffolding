@@ -4,15 +4,18 @@ import { AuthResponse, LoginRequest, User } from '../types/auth.types';
 
 export const authService = {
   async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/auth/login', {
+    const response = await apiClient.post<{ success: boolean; data: AuthResponse }>('/auth/login', {
       email,
       password,
     });
 
-    // Save token to storage
-    storage.setToken(response.data.token);
+    // Backend returns nested response: { success, data: { token, user } }
+    const authData = response.data.data;
 
-    return response.data;
+    // Save token to storage
+    storage.setToken(authData.token);
+
+    return authData;
   },
 
   logout(): void {
@@ -25,10 +28,9 @@ export const authService = {
     }
 
     try {
-      const response = await apiClient.get<User>('/users/me');
-      return response.data;
+      const response = await apiClient.get<{ success: boolean; data: User }>('/users/me');
+      return response.data.data || response.data;
     } catch (error) {
-      // Token might be invalid
       storage.removeToken();
       return null;
     }

@@ -27,7 +27,7 @@ export const Navbar = () => {
       <div>
         {isAuthenticated ? (
           <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <span>Hi, {user?.name || user?.email}</span>
+            <span>Hi, {user?.email}</span>
             <button
               onClick={logout}
               style={{
