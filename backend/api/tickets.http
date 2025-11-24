@@ -1,7 +1,7 @@
 ### Variables
-@baseUrl = http://localhost:8091/api/v1
+@baseUrl = http://localhost:8084/api/v1
 @contentType = application/json
-@token = your-jwt-token-here
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTYxYTNiMTMtMzRmMy00MjJkLWI5YWEtYzIxNmQ4MTNkMTBmIiwiZW1haWwiOiJ1c2VyQGV4YW1wbGUuY29tIiwicm9sZXMiOlsidXNlciJdLCJleHAiOjE3NjQwNjg1NjksImlhdCI6MTc2Mzk4MjE2OX0.InAj2RzTxP2ORBcaJhxTniyISys8_QHmLxIlbTW1abs
 
 ### Purchase Ticket
 POST {{baseUrl}}/tickets/purchase
@@ -9,20 +9,9 @@ Authorization: Bearer {{token}}
 Content-Type: {{contentType}}
 
 {
-  "event_id": 1,
+  "event_id": "161a3b13-34f3-422d-b9aa-c216d813d10f",
   "quantity": 2,
   "payment_method": "credit_card"
-}
-
-### Purchase Multiple Tickets
-POST {{baseUrl}}/tickets/purchase
-Authorization: Bearer {{token}}
-Content-Type: {{contentType}}
-
-{
-  "event_id": 1,
-  "quantity": 5,
-  "payment_method": "bank_transfer"
 }
 
 ### Get My Orders

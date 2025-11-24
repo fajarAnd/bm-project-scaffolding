@@ -3,10 +3,12 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/baramulti/ticketing-system/backend/internal/dto"
 	"github.com/baramulti/ticketing-system/backend/internal/models"
 	"github.com/baramulti/ticketing-system/backend/internal/repositories"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
 
@@ -35,24 +37,40 @@ func NewTicketService(
 }
 
 func (s *ticketService) PurchaseTicket(ctx context.Context, userID string, req *dto.PurchaseRequest) (*dto.PurchaseResponse, error) {
-	// TODO: implement purchase flow with transaction
-	// 1. check event availability
-	// 2. start transaction
-	// 3. lock event row (SELECT FOR UPDATE)
-	// 4. process payment (stub)
-	// 5. create order
-	// 6. decrement tickets
-	// 7. generate ticket codes
-	// 8. commit
-	// 9. send email (async)
+	// TODO: Production flow:
+	// 1. Validate event exists: event, err := s.eventRepo.FindByID(ctx, req.EventID)
+	// 2. Check availability: event.AvailableTickets >= req.Quantity
+	// 3. Start database transaction
+	// 4. Lock event row: SELECT FOR UPDATE
+	// 5. Process payment via gateway (Stripe/Midtrans)
+	// 6. Create order record with status "pending"
+	// 7. Decrement event.AvailableTickets
+	// 8. Generate unique ticket codes
+	// 9. Update order status to "confirmed"
+	// 10. Commit transaction
+	// 11. Send confirmation email (async job)
 
 	s.log.Info().
 		Str("user_id", userID).
 		Str("event_id", req.EventID).
 		Int("qty", req.Quantity).
-		Msg("purchase attempt")
+		Msg("purchase attempt (stub)")
 
-	return nil, fmt.Errorf("not implemented")
+	// STUB: Return mock successful purchase
+	orderID := uuid.New().String()
+	transactionID := fmt.Sprintf("TXN-%d", time.Now().Unix())
+
+	s.log.Info().
+		Str("order_id", orderID).
+		Str("transaction_id", transactionID).
+		Msg("ticket purchase successful (mock)")
+
+	return &dto.PurchaseResponse{
+		OrderID:       orderID,
+		TransactionID: transactionID,
+		Status:        "confirmed",
+		Message:       fmt.Sprintf("Successfully purchased %d ticket(s)", req.Quantity),
+	}, nil
 }
 
 func (s *ticketService) GetUserOrders(ctx context.Context, userID string) ([]*models.TicketOrder, error) {

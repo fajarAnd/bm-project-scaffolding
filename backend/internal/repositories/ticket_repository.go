@@ -36,37 +36,31 @@ func NewTicketRepository(db *sqlx.DB) TicketRepository {
 
 func (r *ticketRepository) CreateOrder(ctx context.Context, order *models.TicketOrder) error {
 	// TODO: implement order creation
-	// Example: INSERT INTO ticket_orders (id, event_id, user_id, quantity, total_price, status) VALUES (...)
 	return fmt.Errorf("not implemented")
 }
 
 func (r *ticketRepository) FindOrderByID(ctx context.Context, id string) (*models.TicketOrder, error) {
 	// TODO: implement order lookup
-	// Example: SELECT * FROM ticket_orders WHERE id = $1
 	return nil, fmt.Errorf("not implemented")
 }
 
 func (r *ticketRepository) ListOrdersByUserID(ctx context.Context, userID string) ([]*models.TicketOrder, error) {
 	// TODO: implement user's orders lookup
-	// Example: SELECT * FROM ticket_orders WHERE user_id = $1 ORDER BY created_at DESC
 	return nil, fmt.Errorf("not implemented")
 }
 
 func (r *ticketRepository) UpdateOrderStatus(ctx context.Context, orderID string, status models.TicketOrderStatus) error {
 	// TODO: implement order status update
-	// Example: UPDATE ticket_orders SET status = $1, updated_at = NOW() WHERE id = $2
 	return fmt.Errorf("not implemented")
 }
 
 func (r *ticketRepository) CreateTickets(ctx context.Context, tickets []*models.Ticket) error {
 	// TODO: implement bulk ticket creation
-	// Example: INSERT INTO tickets (id, order_id, ticket_code, status) VALUES (...) multiple rows
 	return fmt.Errorf("not implemented")
 }
 
 func (r *ticketRepository) FindTicketsByOrderID(ctx context.Context, orderID string) ([]*models.Ticket, error) {
 	// TODO: implement tickets lookup by order
-	// Example: SELECT * FROM tickets WHERE order_id = $1
 	return nil, fmt.Errorf("not implemented")
 }
 

@@ -29,13 +29,11 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 
 func (r *userRepository) FindByID(ctx context.Context, id string) (*models.User, error) {
 	// TODO: implement actual database query
-	// Example: SELECT * FROM users WHERE id = $1
 	return nil, fmt.Errorf("not implemented")
 }
 
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
 	// TODO: implement actual database query
-	// Example: SELECT * FROM users WHERE email = $1
 	return nil, fmt.Errorf("not implemented")
 }
 

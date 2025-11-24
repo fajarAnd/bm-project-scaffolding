@@ -18,8 +18,12 @@ func NewTicketHandler(ticketSvc services.TicketService) *TicketHandler {
 }
 
 func (h *TicketHandler) Purchase(c *gin.Context) {
-	// TODO: extract user from context (set by auth middleware)
-	userID := "mock-user-id" // placeholder
+	// Extract user ID from JWT context (set by auth middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		response.Error(c, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
 
 	var req dto.PurchaseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -27,7 +31,7 @@ func (h *TicketHandler) Purchase(c *gin.Context) {
 		return
 	}
 
-	result, err := h.ticketSvc.PurchaseTicket(c.Request.Context(), userID, &req)
+	result, err := h.ticketSvc.PurchaseTicket(c.Request.Context(), userID.(string), &req)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -37,10 +41,14 @@ func (h *TicketHandler) Purchase(c *gin.Context) {
 }
 
 func (h *TicketHandler) GetUserOrders(c *gin.Context) {
-	// TODO: extract user from context
-	userID := "mock-user-id"
+	// Extract user ID from context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		response.Error(c, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
 
-	orders, err := h.ticketSvc.GetUserOrders(c.Request.Context(), userID)
+	orders, err := h.ticketSvc.GetUserOrders(c.Request.Context(), userID.(string))
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
