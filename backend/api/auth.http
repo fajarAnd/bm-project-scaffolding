@@ -1,5 +1,5 @@
 ### Variables
-@baseUrl = http://localhost:8084/api/v1
+@baseUrl = http://localhost:8091/api/v1
 @contentType = application/json
 # Token will be populated after login
 @token = your-jwt-token-here
@@ -19,7 +19,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: {{contentType}}
 
 {
-  "email": "user@example.com",
+  "email": "fajar.andriansyah@gosignal.id",
   "password": "password123"
 }
 
