@@ -1,23 +1,58 @@
 # Frontend
 
-This folder is intended for your web client scaffold.
+React + TypeScript + Vite setup for the ticketing app.
 
-## What to include
+## Setup
 
-- Project manifest (e.g., `package.json`)
-- Stubbed pages or components for:
-  - Login
-  - Event listing (public)
-  - Ticket purchase (protected/gated)
-- Service/API integration layer (can be stubbed or pseudocode)
-- Clear folder organization for routing, logic, and shared utilities (feel free to reorganize)
-- Build/run instructions for local development
+```bash
+npm install
+npm run dev
+```
 
-## Integration & Build
+Opens on http://localhost:5173
 
-- Show or describe the build → deployment flow.  
-  No need for full CI/CD—documented build commands are sufficient.
-- Ensure the frontend can be served locally by a new developer with minimal setup.
+## What's in here
 
-> **Note:**  
-> You are free to reorganize, replace, or remove anything in this directory.
+- React 18 with TypeScript
+- Vite for dev server and builds
+- React Router for navigation
+- Axios for API calls
+
+## Structure
+
+```
+src/
+├── pages/       - page components
+├── components/  - shared components
+├── contexts/    - React context (auth, etc)
+├── services/    - API calls
+├── utils/       - helpers
+└── types/       - TS types
+```
+
+## Config
+
+Copy `.env.example` to `.env` if you need to change the API URL. Defaults should work fine for local dev.
+
+The Vite config proxies `/api/*` to the backend on port 8080, so CORS isn't an issue locally.
+
+## Building
+
+```bash
+npm run build    # outputs to dist/
+npm run preview  # test the build locally
+```
+
+Static files go in `dist/` - can be deployed to S3, Vercel, anywhere really.
+
+## Docker
+
+There's a Dockerfile if you want to run this in a container. Or just use docker-compose from the root.
+
+## Status
+
+Basic scaffold is done. Still need to implement:
+- Auth pages and login flow
+- Event listing
+- Ticket purchase
+- Proper error handling
