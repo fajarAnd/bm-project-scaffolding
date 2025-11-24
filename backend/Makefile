@@ -1,5 +1,11 @@
 .PHONY: help build run test clean migrate-up migrate-down docker-build docker-up docker-down
 
+# Load .env file if it exists
+ifneq (,$(wildcard .env))
+    include .env
+    export
+endif
+
 # Variables
 APP_NAME=ticketing-api
 MAIN_PATH=cmd/api/main.go

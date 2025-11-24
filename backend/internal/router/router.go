@@ -30,7 +30,7 @@ func Setup(cfg *RouterConfig) *gin.Engine {
 	r.Use(middleware.CORSMiddleware())
 
 	// Health check
-	r.GET("/health", func(c *gin.Context) {
+	r.HEAD("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
