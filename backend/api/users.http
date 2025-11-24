@@ -1,0 +1,36 @@
+### Variables
+@baseUrl = http://localhost:8091/api/v1
+@contentType = application/json
+@token = your-jwt-token-here
+
+### Get Current User Profile
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{token}}
+
+### Update Current User Profile
+PUT {{baseUrl}}/users/me
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe Updated",
+  "email": "newemail@example.com"
+}
+
+### Create New User (Admin Only)
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "email": "newuser@example.com",
+  "password": "password123",
+  "name": "New User",
+  "role": "customer"
+}
+
+### Delete User (Admin Only)
+DELETE {{baseUrl}}/users/123
+Authorization: Bearer {{token}}
+
+###

@@ -1,0 +1,36 @@
+### Variables
+@baseUrl = http://localhost:8091/api/v1
+@contentType = application/json
+@token = your-jwt-token-here
+
+### Purchase Ticket
+POST {{baseUrl}}/tickets/purchase
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "event_id": 1,
+  "quantity": 2,
+  "payment_method": "credit_card"
+}
+
+### Purchase Multiple Tickets
+POST {{baseUrl}}/tickets/purchase
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "event_id": 1,
+  "quantity": 5,
+  "payment_method": "bank_transfer"
+}
+
+### Get My Orders
+GET {{baseUrl}}/tickets/my-orders
+Authorization: Bearer {{token}}
+
+### Get My Orders with Pagination
+GET {{baseUrl}}/tickets/my-orders?page=1&limit=10
+Authorization: Bearer {{token}}
+
+###

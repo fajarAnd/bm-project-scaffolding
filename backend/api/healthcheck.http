@@ -1,0 +1,5 @@
+### Get Healthcheck - JSON Response
+HEAD http://localhost:8091/health
+Content-Type: application/json
+
+###

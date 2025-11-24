@@ -1,0 +1,49 @@
+### Variables
+@baseUrl = http://localhost:8091/api/v1
+@contentType = application/json
+@token = your-jwt-token-here
+
+### Get All Events (Public)
+GET {{baseUrl}}/events
+
+### Get All Events with Pagination (Public)
+GET {{baseUrl}}/events?page=1&limit=10
+
+### Get Event by ID (Public)
+GET {{baseUrl}}/events/1
+
+### Create New Event (Auth Required - Admin)
+POST {{baseUrl}}/events
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Rock Concert 2025",
+  "description": "Amazing rock concert featuring top bands",
+  "location": "Jakarta Convention Center",
+  "date": "2025-12-31T20:00:00Z",
+  "capacity": 5000,
+  "price": 500000,
+  "image_url": "https://example.com/concert.jpg"
+}
+
+### Update Event (Auth Required - Admin)
+PUT {{baseUrl}}/events/1
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Rock Concert 2025 - Updated",
+  "description": "Amazing rock concert featuring top bands - UPDATED",
+  "location": "Jakarta Convention Center - Hall A",
+  "date": "2025-12-31T20:00:00Z",
+  "capacity": 6000,
+  "price": 550000,
+  "image_url": "https://example.com/concert-updated.jpg"
+}
+
+### Delete Event (Auth Required - Admin)
+DELETE {{baseUrl}}/events/1
+Authorization: Bearer {{token}}
+
+###
