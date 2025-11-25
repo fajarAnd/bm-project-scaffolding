@@ -84,6 +84,7 @@ services:
       - ENV=${ENV:-development}
 
       # Database Configuration
+      - POSTGRES_USER=${POSTGRES_USER}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-bm:5432/${TICKETING_DB_NAME}?sslmode=disable
       - DB_MAX_OPEN_CONNS=${DB_MAX_OPEN_CONNS:-25}
       - DB_MAX_IDLE_CONNS=${DB_MAX_IDLE_CONNS:-5}

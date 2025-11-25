@@ -5,7 +5,7 @@ echo "Starting container..."
 
 # Wait for database to be ready
 echo "Waiting for database to be ready..."
-until wget --spider -q http://postgres-bm:5432 2>/dev/null || nc -z postgres-bm 5432; do
+until pg_isready -h postgres-bm -p 5432 -U ${POSTGRES_USER} > /dev/null 2>&1; do
   echo "Database is unavailable - sleeping"
   sleep 2
 done
