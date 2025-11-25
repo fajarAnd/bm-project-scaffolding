@@ -1,6 +1,6 @@
 import { apiClient } from '../utils/api';
 import { storage } from '../utils/storage';
-import { AuthResponse, LoginRequest, User } from '../types/auth.types';
+import { AuthResponse, User } from '../types/auth.types';
 
 export const authService = {
   async login(email: string, password: string): Promise<AuthResponse> {

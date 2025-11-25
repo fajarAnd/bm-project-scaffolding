@@ -1,22 +1,39 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { Event } from '../types/event.types';
+import { eventService } from '../services/event.service';
+import { ticketService } from '../services/ticket.service';
 
 export const PurchasePage = () => {
   const { user } = useAuth();
+  const [events, setEvents] = useState<Event[]>([]);
   const [eventId, setEventId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Mock events for dropdown - will be fetched from API in Phase 4
-  const events = [
-    { id: '1', name: 'Summer Music Festival 2025', price: 150 },
-    { id: '2', name: 'Tech Conference 2025', price: 299 },
-    { id: '3', name: 'Food & Wine Festival', price: 85 }
-  ];
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setIsLoadingEvents(true);
+      const data = await eventService.getEvents();
+      setEvents(data);
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: 'Failed to load events. Please refresh the page.'
+      });
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  };
 
   const selectedEvent = events.find(e => e.id === eventId);
-  const totalPrice = selectedEvent ? selectedEvent.price * quantity : 0;
+  const totalPrice = selectedEvent ? selectedEvent.ticket_price * quantity : 0;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,24 +52,26 @@ export const PurchasePage = () => {
     setIsLoading(true);
 
     try {
-      // API call will be implemented in Phase 4
-      // await ticketService.purchaseTicket({ eventId, quantity });
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await ticketService.purchaseTicket({
+        event_id: eventId,
+        quantity: quantity
+      });
 
       setMessage({
         type: 'success',
-        text: `Successfully purchased ${quantity} ticket(s) for ${selectedEvent?.name}!`
+        text: response.message || `Successfully purchased ${quantity} ticket(s) for ${selectedEvent?.title}! Order ID: ${response.order_id}`
       });
 
       // Reset form
       setEventId('');
       setQuantity(1);
+
+      // Reload events to get updated ticket availability
+      loadEvents();
     } catch (err: any) {
       setMessage({
         type: 'error',
-        text: err.response?.data?.message || 'Purchase failed. Please try again.'
+        text: err.response?.data?.error || err.message || 'Purchase failed. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -80,7 +99,7 @@ export const PurchasePage = () => {
             id="event"
             value={eventId}
             onChange={(e) => setEventId(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || isLoadingEvents}
             style={{
               width: '100%',
               padding: '10px',
@@ -90,10 +109,12 @@ export const PurchasePage = () => {
               backgroundColor: 'white'
             }}
           >
-            <option value="">-- Choose an event --</option>
+            <option value="">
+              {isLoadingEvents ? 'Loading events...' : '-- Choose an event --'}
+            </option>
             {events.map((event) => (
               <option key={event.id} value={event.id}>
-                {event.name} (${event.price})
+                {event.title} (Rp{event.ticket_price.toLocaleString('id-ID')})
               </option>
             ))}
           </select>
@@ -130,17 +151,23 @@ export const PurchasePage = () => {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
               <span>Price per ticket:</span>
-              <span style={{ fontWeight: '500' }}>${selectedEvent.price}</span>
+              <span style={{ fontWeight: '500' }}>Rp{selectedEvent.ticket_price.toLocaleString('id-ID')}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
               <span>Quantity:</span>
               <span style={{ fontWeight: '500' }}>{quantity}</span>
             </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+              <span>Available tickets:</span>
+              <span style={{ fontWeight: '500', color: selectedEvent.available_tickets < 10 ? '#dc3545' : '#666' }}>
+                {selectedEvent.available_tickets}
+              </span>
+            </div>
             <hr style={{ margin: '10px 0', border: 'none', borderTop: '1px solid #ddd' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontWeight: '600' }}>Total:</span>
               <span style={{ fontWeight: '600', fontSize: '18px', color: '#007bff' }}>
-                ${totalPrice}
+                Rp{totalPrice.toLocaleString('id-ID')}
               </span>
             </div>
           </div>
@@ -161,32 +188,22 @@ export const PurchasePage = () => {
 
         <button
           type="submit"
-          disabled={isLoading || !eventId}
+          disabled={isLoading || isLoadingEvents || !eventId}
           style={{
             width: '100%',
             padding: '12px',
             fontSize: '16px',
             fontWeight: '500',
-            backgroundColor: isLoading || !eventId ? '#ccc' : '#28a745',
+            backgroundColor: isLoading || isLoadingEvents || !eventId ? '#ccc' : '#28a745',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: isLoading || !eventId ? 'not-allowed' : 'pointer',
+            cursor: isLoading || isLoadingEvents || !eventId ? 'not-allowed' : 'pointer',
             transition: 'background-color 0.2s'
           }}
         >
           {isLoading ? 'Processing...' : 'Purchase Tickets'}
         </button>
-
-        <p style={{
-          marginTop: '20px',
-          fontSize: '13px',
-          color: '#999',
-          textAlign: 'center',
-          fontStyle: 'italic'
-        }}>
-          Note: API integration will be completed in Phase 4. This is a demo form.
-        </p>
       </form>
     </div>
   );

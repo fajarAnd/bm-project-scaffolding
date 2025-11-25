@@ -39,10 +39,7 @@ func (h *EventHandler) List(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusOK, gin.H{
-		"events": events,
-		"page":   page,
-	})
+	response.Success(c, http.StatusOK, events)
 }
 
 func (h *EventHandler) Create(c *gin.Context) {

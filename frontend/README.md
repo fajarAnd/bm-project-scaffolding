@@ -48,11 +48,3 @@ Static files go in `dist/` - can be deployed to S3, Vercel, anywhere really.
 ## Docker
 
 There's a Dockerfile if you want to run this in a container. Or just use docker-compose from the root.
-
-## Status
-
-Basic scaffold is done. Still need to implement:
-- Auth pages and login flow
-- Event listing
-- Ticket purchase
-- Proper error handling

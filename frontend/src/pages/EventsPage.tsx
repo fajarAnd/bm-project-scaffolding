@@ -1,44 +1,30 @@
+import { useState, useEffect } from 'react';
 import { EventCard } from '../components/EventCard';
 import { Event } from '../types/event.types';
-
-// Mock events data - will be replaced with API call in Phase 4
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    name: 'Summer Music Festival 2025',
-    description: 'Join us for the biggest music festival of the year featuring top artists from around the world.',
-    date: '2025-07-15T18:00:00Z',
-    location: 'Ice BSD, Tangerang',
-    price: 150.00,
-    available_tickets: 500,
-    created_at: '2025-01-01T00:00:00Z',
-    updated_at: '2025-01-01T00:00:00Z'
-  },
-  {
-    id: '2',
-    name: 'Tech Conference 2025',
-    description: 'Discover the latest trends in technology and network with industry leaders.',
-    date: '2025-08-20T09:00:00Z',
-    location: 'Ice BSD, Tangerang',
-    price: 299.00,
-    available_tickets: 200,
-    created_at: '2025-01-02T00:00:00Z',
-    updated_at: '2025-01-02T00:00:00Z'
-  },
-  {
-    id: '3',
-    name: 'Food & Wine Festival',
-    description: 'Experience culinary delights from world-renowned chefs and sommeliers.',
-    date: '2025-09-10T12:00:00Z',
-    location: 'Ice BSD, Tangerang',
-    price: 85.00,
-    available_tickets: 150,
-    created_at: '2025-01-03T00:00:00Z',
-    updated_at: '2025-01-03T00:00:00Z'
-  }
-];
+import { eventService } from '../services/event.service';
 
 export const EventsPage = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await eventService.getEvents();
+      setEvents(data);
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message || 'Failed to load events');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <h1 style={{ marginBottom: '10px' }}>Available Events</h1>
@@ -46,15 +32,58 @@ export const EventsPage = () => {
         Browse our upcoming events and book your tickets today!
       </p>
 
-      <div>
-        {mockEvents.map((event) => (
-          <EventCard key={event.id} event={event} />
-        ))}
-      </div>
+      {isLoading && (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+          <p>Loading events...</p>
+        </div>
+      )}
 
-      <p style={{ marginTop: '30px', fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
-        Note: Currently showing mock data. Real-time event data will be loaded from API in Phase 4.
-      </p>
+      {error && (
+        <div style={{
+          padding: '20px',
+          backgroundColor: '#f8d7da',
+          color: '#721c24',
+          borderRadius: '4px',
+          border: '1px solid #f5c6cb',
+          marginBottom: '20px'
+        }}>
+          <strong>Error:</strong> {error}
+          <button
+            onClick={loadEvents}
+            style={{
+              marginLeft: '15px',
+              padding: '5px 15px',
+              backgroundColor: '#721c24',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !error && events.length === 0 && (
+        <div style={{
+          textAlign: 'center',
+          padding: '40px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '8px',
+          color: '#666'
+        }}>
+          <p>No events available at the moment. Check back later!</p>
+        </div>
+      )}
+
+      {!isLoading && !error && events.length > 0 && (
+        <div>
+          {events.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
