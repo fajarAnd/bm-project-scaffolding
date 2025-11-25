@@ -87,7 +87,7 @@ Full stack rationale in [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md)
 docker-compose up -d
 ```
 
-Everything (Postgres, Redis, API) starts with one command.
+Everything (PostgreSQL, Redis, MinIO, Backend API) starts with one command.
 
 ### Local Development
 
@@ -102,7 +102,7 @@ make deps
 make run
 ```
 
-Make sure Postgres and Redis are running locally.
+Make sure PostgreSQL, Redis, and MinIO are running locally (use docker-compose or run them separately).
 
 ## API Endpoints
 
@@ -137,11 +137,25 @@ make migrate-up    # Apply database migrations
 
 Environment variables are loaded from `.env` file. Required settings:
 
-- `DATABASE_URL` - Postgres connection string
+- `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET` - Token signing key
 - `PORT` - Server port (default: 8080)
+- `MINIO_ENDPOINT` - MinIO server endpoint (e.g., minio:9000)
+- `MINIO_ACCESS_KEY` - MinIO access credentials
+- `MINIO_SECRET_KEY` - MinIO secret credentials
+- `S3_BUCKET` - Bucket name for storing assets (default: ticketing-assets)
 
 See `.env.example` for all available options.
+
+### Object Storage (MinIO)
+
+The backend integrates with MinIO for S3-compatible object storage:
+- **Local**: MinIO container (http://localhost:9001 console)
+- **Production**: AWS S3 or compatible cloud storage
+- **Bucket**: Automatically created via `minio-init` service
+- **Use case**: Ticket QR codes, event images, receipts
+
+MinIO configuration is handled via environment variables, making it easy to swap between local MinIO and cloud S3 without code changes.
 
 ## Documentation
 

@@ -60,7 +60,7 @@ graph TB
         Storage[Object Storage<br/>MinIO/S3]
     end
 
-    Payment[Payment Gateway<br/>Stripe/PayPal<br/><i>STUB</i>]
+    Payment[Payment Gateway<br/>Midtrans<br/><i>STUB</i>]
     Email[Email Service<br/>SendGrid<br/><i>STUB</i>]
 
     User -->|HTTPS| FE
@@ -181,6 +181,7 @@ sequenceDiagram
     participant TicketSvc as Ticket Service
     participant Payment as Payment Service (Stub)
     participant DB as PostgreSQL
+    participant storage as minIO/S3
 
     User ->> FE: Click "Purchase Ticket"
     FE ->> API: POST /tickets/purchase {eventID, qty, token}
@@ -200,8 +201,10 @@ sequenceDiagram
 
         TicketSvc ->> DB: Decrement tickets + Create ticket
         DB -->> TicketSvc: OK
+        
+        TicketSvc ->> storage: Generate Ticket
 
-        TicketSvc -->> API: success {ticketID}
+        TicketSvc -->> API: success {ticketID & link ticket}
         API -->> FE: 200 OK
         FE -->> User: Show confirmation
     else Sold Out
@@ -402,19 +405,12 @@ The system uses a flexible RBAC model with separate tables for roles and permiss
 1. **User-Role Assignment:**
    - `user_roles` - Junction table enabling many-to-many relationship
    - Users can have multiple roles (e.g., user + organizer)
-   - Tracks who assigned the role and when for audit trail
 
 2. **Role-Permission Model:**
    - `roles` - Master data for system roles (admin, user, organizer, etc.)
    - `permissions` - Granular permissions following resource.action naming (e.g., `events.create`, `users.delete`)
    - `role_permissions` - Junction table mapping permissions to roles
    - Allows dynamic permission updates without code changes
-
-3. **Default Roles:**
-   - **user** - Basic customer (buy tickets, view own orders)
-   - **admin** - Full system access (user management, system config)
-   - **organizer** - Event management (create events, view sales)
-   - **validator** - Ticket validation only (scan at venue entrance)
 
 **Ticket purchase mechanism:**
 1. **Availability tracking:**

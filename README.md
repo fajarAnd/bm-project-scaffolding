@@ -1,5 +1,92 @@
 # Ticketing System Scaffold
 
-## Getting Started
+Production-ready scaffold for a live events ticketing system with complete local development infrastructure.
+
+## Quick Start
+
+### Prerequisites
+- Docker Desktop installed
+- Git
+
+### One-Command Setup
+
+```bash
+# Clone and start everything
+git clone <repository-url>
+cd bm-project-scaffolding
+cp .env.example .env
+docker-compose up -d
+```
+
+This starts all services:
+- **PostgreSQL** (port 5434) - Database
+- **Redis** (port 6380) - Cache
+- **MinIO** (ports 9000, 9001) - Object storage (S3-compatible)
+- **Backend API** (port 8091) - Go backend
+- **Frontend** (port 5173) - React application
+
+### Access Points
+
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8091
+- MinIO Console: http://localhost:9001 (credentials: minioadmin / minioadmin123)
+- API Health Check: http://localhost:8091/health
+
+## Architecture
+
+See detailed documentation:
+- [`docs/Architecture.md`](docs/Architecture.md) - System architecture and design decisions
+- [`backend/README.md`](backend/README.md) - Backend structure and API details
+- [`frontend/README.md`](frontend/README.md) - Frontend setup and routing
+
+## Services Overview
+
+| Service | Local Port | Cloud Equivalent | Purpose |
+|---------|-----------|------------------|---------|
+| PostgreSQL | 5434 | AWS RDS | Primary database |
+| Redis | 6380 | ElastiCache | Caching layer |
+| MinIO | 9000, 9001 | AWS S3 | Object storage for tickets/assets |
+| Backend API | 8091 | ECS Fargate | REST API |
+| Frontend | 5173 | CloudFront + S3 | React SPA |
+
+## Development Workflow
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# Reset everything (including data)
+docker-compose down -v
+```
+
+## What's Included
+
+✅ Complete local infrastructure (database, cache, storage)
+✅ Authentication with JWT
+✅ Role-based access control (RBAC)
+✅ Database migrations
+✅ Docker containerization
+✅ Environment configuration templates
+✅ Health checks for all services
+
+## Project Structure
+
+```
+.
+├── backend/           # Go REST API
+├── frontend/          # React application
+├── infra/            # Infrastructure automation (Terraform)
+├── docs/             # Architecture documentation
+├── scripts/          # Database initialization scripts
+├── docker-compose.yaml
+└── .env.example
+```
+
+## Next Steps
 
 See each subdirectory's `README.md` for details on expectations and placeholders.
+
+For infrastructure provisioning, see [`infra/README.md`](infra/README.md).
