@@ -40,6 +40,13 @@ test-coverage: ## Run tests with coverage
 	@go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
 
+mocks: ## Generate mocks using mockery
+	@echo "Generating mocks..."
+	@mockery --name=UserRepository --dir=internal/repositories --output=internal/repositories/mocks --outpkg=mocks
+	@mockery --name=TicketRepository --dir=internal/repositories --output=internal/repositories/mocks --outpkg=mocks
+	@mockery --name=EventRepository --dir=internal/repositories --output=internal/repositories/mocks --outpkg=mocks
+	@echo "Mocks generated in internal/repositories/mocks/"
+
 lint: ## Run linter
 	@echo "Running linter..."
 	@golangci-lint run
@@ -94,6 +101,7 @@ install-tools: ## Install development tools
 	@go install github.com/cosmtrek/air@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	@go install github.com/vektra/mockery/v2@latest
 	@echo "Tools installed"
 
 deps: ## Download dependencies

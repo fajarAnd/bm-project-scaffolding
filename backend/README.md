@@ -131,7 +131,46 @@ make run           # Run the server
 make build         # Build binary
 make test          # Run tests
 make migrate-up    # Apply database migrations
+make mocks         # Generate mocks for testing
 ```
+
+## Testing
+
+### Unit Tests
+
+Tests follow table-driven approach with generated mocks:
+
+```bash
+# Run all tests
+make test
+
+# Run specific package
+go test -v ./internal/services/
+
+# Generate mocks (mockery required)
+make mocks
+```
+
+Test files are located alongside source code (e.g., `auth_service_test.go` next to `auth_service.go`). Mocks are in `internal/repositories/mocks/`.
+
+### HTTP/API Testing
+
+Use `.http` files in `api/` directory for manual endpoint testing. Works with:
+- **VSCode**: Install [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension
+- **JetBrains IDEs**: Built-in HTTP Client (IntelliJ, GoLand, etc.)
+
+Example workflow:
+1. Start the server (`make run`)
+2. Open `api/auth.http`
+3. Click "Send Request" to execute
+4. Copy the JWT token from response
+5. Use token in protected endpoints (already configured in files)
+
+Files:
+- `api/auth.http` - Login, register
+- `api/events.http` - List events
+- `api/tickets.http` - Purchase tickets, view orders
+- `api/users.http` - User management
 
 ## Configuration
 

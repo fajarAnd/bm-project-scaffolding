@@ -49,7 +49,6 @@ func main() {
 		UserHandler:   handlers.user,
 	})
 
-	// Start server
 	addr := fmt.Sprintf(":%s", cfg.Server.Port)
 	logger.Info().Str("addr", addr).Str("env", cfg.Server.Env).Msg("server starting")
 
