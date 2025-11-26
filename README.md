@@ -52,17 +52,6 @@ See detailed documentation:
 - [`backend/README.md`](backend/README.md) - Backend structure and API details
 - [`frontend/README.md`](frontend/README.md) - Frontend setup and routing
 
-## Services Overview
-
-| Service | Local Port | Cloud Equivalent | Purpose |
-|---------|-----------|------------------|---------|
-| PostgreSQL | 5434 | AWS RDS | Primary database |
-| Redis | 6380 | ElastiCache | Caching layer |
-| MinIO | 9000, 9001 | AWS S3 | Object storage for tickets/assets |
-| Backend API | 8091 | ECS Fargate | REST API |
-| Frontend | 5173 | CloudFront + S3 | React SPA |
-
-
 ## Production Deployment
 
 Deploy to AWS using Terraform automation in [`infra/`](infra/):
