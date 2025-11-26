@@ -284,6 +284,17 @@ graph TB
 
         Cognito[AWS Cognito<br/>Auth Provider<br/><i>TODO</i>]
     end
+    
+    subgraph Obs[Observability]
+        subgraph "Monitoring Tools" 
+            Uptrace
+            Grafana
+        end
+        subgraph "Distribute Tracing" 
+            otel[OpenTelemetry]
+        end
+        
+    end
 
     User[Users]
 
@@ -295,16 +306,24 @@ graph TB
     ECS --> EC
     ECS --> S3
     ECS -.->|TODO| Cognito
+    ECS -.->|TODO| Obs
 ```
 
 **AWS Services:**
 - ECS Fargate - Serverless containers with auto-scaling
-- RDS PostgreSQL - Managed database
-- ElastiCache Redis - Managed cache
-- S3 - Object storage + static assets
+- RDS PostgreSQL - Multi-AZ managed database with automated backups
+- ElastiCache Redis - Cluster mode cache for sessions and data
+- S3 - Static assets (frontend) + object storage (tickets/assets)
 - Cloudflare CDN - Global distribution with DDoS protection
-- ALB - Load balancer with health checks
-- VPC - Network isolation
+- ALB - Application Load Balancer with health checks
+- VPC - Network isolation with public/private subnets
+- NAT Gateway - Outbound internet access for private subnets
+- Internet Gateway - Inbound/outbound traffic routing
+- Security Groups - Firewall rules with least-privilege access
+- IAM Roles - ECS task roles for S3 access (no hardcoded credentials)
+- CloudWatch Logs - Centralized logging and monitoring
+
+> **Detailed infrastructure documentation**: See [`README.md`](../README.md#services-overview) for local development setup and [`infra/README.md`](../infra/README.md) for complete infrastructure automation.
 
 ---
 
