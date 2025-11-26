@@ -676,7 +676,4 @@ terraform destroy
 ## References
 
 * [Go Project Layout](https://github.com/golang-standards/project-layout) - Standard Go structure
-* [12-Factor App](https://12factor.net/) - Modern app best practices
-* [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/) - Cloud architecture principles
-* [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Security best practices
-
+* [4+1](https://medium.com/2b-1-better-2day/4-1-view-model-of-architecture-1a1794ff8110) - view model of architecture

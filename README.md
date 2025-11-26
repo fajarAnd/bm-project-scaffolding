@@ -2,6 +2,19 @@
 
 Production-ready scaffold for a live events ticketing system with complete local development infrastructure.
 
+## Project Structure
+
+```
+.
+├── backend/           # Go REST API
+├── frontend/          # React application
+├── infra/            # Infrastructure automation (Terraform)
+├── docs/             # Architecture documentation
+├── scripts/          # Database initialization scripts
+├── docker-compose.yaml
+└── .env.example
+```
+
 ## Quick Start
 
 ### Prerequisites
@@ -49,44 +62,30 @@ See detailed documentation:
 | Backend API | 8091 | ECS Fargate | REST API |
 | Frontend | 5173 | CloudFront + S3 | React SPA |
 
-## Development Workflow
+
+## Production Deployment
+
+Deploy to AWS using Terraform automation in [`infra/`](infra/):
 
 ```bash
-# Start all services
-docker-compose up -d
-
-# Stop services
-docker-compose down
-
-# Reset everything (including data)
-docker-compose down -v
+cd infra/scripts
+./provision.sh prod
 ```
 
-## What's Included
+This creates:
+- **VPC** with public/private subnets (Multi-AZ)
+- **ECS Fargate** for backend (auto-scaling 2-10 tasks)
+- **RDS PostgreSQL** (encrypted, automated backups)
+- **ElastiCache Redis** for caching
+- **S3** for object storage
+- **ALB** for load balancing
 
-✅ Complete local infrastructure (database, cache, storage)
-✅ Authentication with JWT
-✅ Role-based access control (RBAC)
-✅ Database migrations
-✅ Docker containerization
-✅ Environment configuration templates
-✅ Health checks for all services
-
-## Project Structure
-
-```
-.
-├── backend/           # Go REST API
-├── frontend/          # React application
-├── infra/            # Infrastructure automation (Terraform)
-├── docs/             # Architecture documentation
-├── scripts/          # Database initialization scripts
-├── docker-compose.yaml
-└── .env.example
+After deployment, get endpoints:
+```bash
+cd ../terraform
+terraform output
 ```
 
-## Next Steps
+Update backend `.env` with the outputs (RDS endpoint, Redis URL, S3 bucket). Frontend deploys to S3 + CloudFront (configure separately or use Vercel/Netlify).
 
-See each subdirectory's `README.md` for details on expectations and placeholders.
-
-For infrastructure provisioning, see [`infra/README.md`](infra/README.md).
+Full deployment guide: [`infra/README.md`](infra/README.md)

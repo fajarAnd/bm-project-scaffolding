@@ -30,6 +30,24 @@ src/
 └── types/       - TS types
 ```
 
+## Authentication
+
+Login and protected routes are working with backend integration:
+
+- JWT tokens stored in localStorage (`auth_token` key)
+- Protected routes auto-redirect to login if unauthenticated
+- Token injection via Axios interceptors (automatic headers)
+- Logout clears token and session
+
+### Development Login
+
+Backend is currently using stub auth:
+- Email: any valid email format (e.g., `user@example.com`)
+- Password: anything works (validation not enforced yet)
+- User data is mocked by backend, JWT generation is real
+
+The `AuthContext` manages auth state. Use `ProtectedRoute` wrapper for pages that need auth.
+
 ## Config
 
 Copy `.env.example` to `.env` if you need to change the API URL. Defaults should work fine for local dev.
